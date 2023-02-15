@@ -1,0 +1,5 @@
+# Ignore dev folder
+dev
+
+# Ignore every __pycacche__ folder
+pymodules/__pycache__
