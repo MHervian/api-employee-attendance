@@ -37,7 +37,6 @@ def delete(sql, connection):
         csr.execute(sql)
         connection.commit()
         csr.close()
-        result['id'] = '3'
     except Error as e:
         print("Error query:", e)
     finally:
