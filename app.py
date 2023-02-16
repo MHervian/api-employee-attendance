@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from datetime import datetime
 
 # from custom modules
 from pymodules import connection
@@ -29,6 +30,25 @@ def employee():
         result = {
             'status_code': '400',
             'status': 'Failed to query data karyawan'
+        }
+
+    return jsonify(result)
+
+# Get karyawan by id
+@app.route('/karyawan/<int:id>', methods=['GET'])
+def get_karyawan_by_id(id):
+    try:
+        conn = connection.connect()
+        query = f"SELECT * FROM karyawan WHERE id = {id}"
+        result = {
+            'data': connection.query(query, conn),
+            'status_code': '200',
+            'status': f"Query karyawan success by id: {id}"
+        }
+    except:
+        result = {
+            'status_code': '400',
+            'status': f'Failed to query data karyawan by id: {id}'
         }
 
     return jsonify(result)
@@ -168,6 +188,31 @@ def admin():
 
     return jsonify(result)
 
+# Get admin by id
+@app.route('/admin/<int:id>', methods=['GET'])
+def get_admin_by_id(id):
+    try:
+        conn = connection.connect()
+        query = f"SELECT * FROM admin WHERE id = {id}"
+        result = {
+            'data': connection.query(query, conn),
+            'status_code': '200',
+            'status': f"Query admin success by id {id}"
+        }
+    except KeyError:
+        result = {
+            'status_code': '400',
+            'status': "The keys (nama, pass_akun) are not found in JSON data."
+        }
+        return jsonify(result)
+    except:
+        result = {
+            'status_code': '400',
+            'status': f'Failed to query data admin by id {id}'
+        }
+
+    return jsonify(result)
+
 # admin login by nama and password
 @app.route('/admin/login', methods=['POST'])
 def get_admin():
@@ -181,12 +226,18 @@ def get_admin():
         result = {
             'data': connection.query(query, conn),
             'status_code': '200',
-            'status': f"Query admin success by id {id}"
+            'status': f"Query admin success by name: {nama}"
         }
+    except KeyError:
+        result = {
+            'status_code': '400',
+            'status': "The keys (nama, pass_akun) are not found in JSON data."
+        }
+        return jsonify(result)
     except:
         result = {
             'status_code': '400',
-            'status': f'Failed to query data admin by id {id}'
+            'status': f'Failed to query data admin by name: {nama}'
         }
 
     return jsonify(result)
@@ -298,13 +349,48 @@ def kehadiran():
 
     return jsonify(result)
 
-
-# Read all absensi by id_karyawan
-
-# Read current absensi by id_karyawan and today date
-@app.route('/absensi/today/', methods=['GET'])
+# Read current absensi by karyawan name and today date
+@app.route('/absensi/today', methods=['POST'])
 def kehadiran_today():
-    pass
+    try:
+        request_data = request.get_json(silent=True)
+        nama = request_data['nama']
+        today = request_data['today']
+        
+        conn = connection.connect()
+        query = f"""SELECT
+                    k.clock_in AS clock_in,
+                    k.geolocation_in AS geolocation_in,
+                    k.clock_out AS clock_out,
+                    k.geolocation_out AS geolocation_out,
+                    k.tanggal_kerja AS tanggal_kerja
+                FROM kehadiran k INNER JOIN karyawan ka ON ka.id = k.id_karyawan
+                    WHERE ka.nama = '{nama}' AND k.tanggal_kerja = '{today}'"""
+
+        hasil = connection.query(query, conn)[0]
+        hasil['clock_in'] = str(hasil['clock_in'])
+        hasil['clock_out'] = str(hasil['clock_out'])
+        hasil['tanggal_kerja'] = str(hasil['tanggal_kerja'])
+        # print(hasil)
+
+        result = {
+            'data': hasil,
+            'status_code': '200',
+            'status': 'Query absensi today success'
+        }
+    except KeyError:
+        result = {
+            'status_code': '400',
+            'status': "The keys (nama, today) are not found in JSON data."
+        }
+        return jsonify(result)
+    except:
+        result = {
+            'status_code': '400',
+            'status': 'Failed to query data kehadiran hari ini'
+        }
+
+    return jsonify(result)
 
 # Read absensi based by id_karyawan and monthly
 @app.route('/absensi/monthly', methods=['GET'])
@@ -332,12 +418,12 @@ def check_in():
         request_data = request.get_json(silent=True)
         id_karyawan = request_data['id_karyawan']
         clock_in = request_data['clock_in']
-        geolocation = request_data['geolocation']
-        tanggal_masuk = request_data['tgl_masuk']
+        geolocation_in = request_data['geolocation_in']
+        today = request_data['today']
     except KeyError:
         result = {
             'status_code': '400',
-            'status': "The keys (id_karyawan, clock_in, geolocation, tgl_masuk) are not found in JSON data."
+            'status': "The keys (id_karyawan, clock_in, geolocation_in, today) are not found in JSON data."
         }
         return jsonify(result)
     except:
@@ -347,11 +433,18 @@ def check_in():
         }
         return jsonify(result)
     
-    conn = connection.connect()
-    query = f"INSERT INTO kehadiran(id_karyawan, clock_in, geolocation_in, tanggal_masuk) VALUES({id_karyawan},'{clock_in}', '{geolocation}', '{tanggal_masuk}')"
-    result = connection.create_update(query, conn, perintah='create')
-    result['status_code'] = '200'
-    result['status'] = 'Check in'
+    try:
+        conn = connection.connect()
+        query = f"""INSERT INTO kehadiran(id_karyawan, clock_in, geolocation_in, tanggal_kerja) 
+                    VALUES({id_karyawan},'{clock_in}', '{geolocation_in}', '{today}')"""
+        result = connection.create_update(query, conn, perintah='create')
+        result['status_code'] = '200'
+        result['status'] = 'Check in'
+    except:
+        result = {
+            'status_code': '400',
+            'status': 'Failed to insert absensi hari ini'
+        }
 
     return jsonify(result)
 
@@ -360,13 +453,14 @@ def check_in():
 def checkout():
     try:
         request_data = request.get_json(silent=True)
-        id_data = request_data['id_data']
+        id_karyawan = request_data['id_karyawan']
         clock_out = request_data['clock_out']
-        geolocation = request_data['geolocation']
+        geolocation_out = request_data['geolocation_out']
+        today = request_data['today']
     except KeyError:
         result = {
             'status_code': '400',
-            'status': "The keys (id_data, clock_out, geolocation) are not found in JSON data."
+            'status': "The keys (id_karyawan, clock_out, geolocation_out, today) are not found in JSON data."
         }
         return jsonify(result)
     except:
@@ -377,7 +471,10 @@ def checkout():
         return jsonify(result)
 
     conn = connection.connect()
-    query = f"UPDATE kehadiran SET clock_out='{clock_out}', geolocation_out='{geolocation}' WHERE id = {id_data}"
+    query = f"""UPDATE kehadiran SET 
+                clock_out='{clock_out}', 
+                geolocation_out='{geolocation_out}' 
+                WHERE id_karyawan = {id_karyawan} AND tanggal_kerja = '{today}'"""
     result = connection.create_update(query, conn)
     result['status_code'] = '200'
     result['status'] = 'Check out success'
