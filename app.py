@@ -33,6 +33,35 @@ def employee():
 
     return jsonify(result)
 
+# karyawan login by nama and password
+@app.route('/karyawan/login', methods=['POST'])
+def get_employee():
+    try:
+        request_data = request.get_json(silent=True)
+        nama = request_data['nama']
+        password = request_data['pass_akun']
+
+        conn = connection.connect()
+        query = f"SELECT * FROM karyawan WHERE nama = '{nama}' AND pass_akun = '{password}'"
+        result = {
+            'data': connection.query(query, conn),
+            'status_code': '200',
+            'status': f"Query karyawan success by name: {nama}"
+        }
+    except KeyError:
+        result = {
+            'status_code': '400',
+            'status': "The keys (nama, pass_akun) are not found in JSON data."
+        }
+        return jsonify(result)
+    except:
+        result = {
+            'status_code': '400',
+            'status': f'Failed to query data karyawan by name: {nama}'
+        }
+
+    return jsonify(result)
+
 # Create karyawan
 @app.route('/karyawan', methods=['POST'])
 def employee_create():
@@ -139,6 +168,29 @@ def admin():
 
     return jsonify(result)
 
+# admin login by nama and password
+@app.route('/admin/login', methods=['POST'])
+def get_admin():
+    try:
+        request_data = request.get_json(silent=True)
+        nama = request_data['nama']
+        password = request_data['pass_akun']
+
+        conn = connection.connect()
+        query = f"SELECT * FROM admin WHERE nama = '{nama}' AND pass_akun = '{password}'"
+        result = {
+            'data': connection.query(query, conn),
+            'status_code': '200',
+            'status': f"Query admin success by id {id}"
+        }
+    except:
+        result = {
+            'status_code': '400',
+            'status': f'Failed to query data admin by id {id}'
+        }
+
+    return jsonify(result)
+
 # Create admin
 @app.route('/admin', methods=['POST'])
 def admin_create():
@@ -225,9 +277,112 @@ def admin_delete():
     return jsonify(result)
 
 """
-Check-in & Check-out attendance
+Check-in & Check-out absensi
 """
+# Read all absensi
+@app.route('/absensi', methods=['GET'])
+def kehadiran():
+    try:
+        conn = connection.connect()
+        query = f"SELECT * FROM kehadiran"
+        result = {
+            'data': connection.query(query, conn),
+            'status_code': '200',
+            'status': 'Query kehadiran success'
+        }
+    except:
+        result = {
+            'status_code': '400',
+            'status': 'Failed to query data kehadiran'
+        }
 
+    return jsonify(result)
+
+
+# Read all absensi by id_karyawan
+
+# Read current absensi by id_karyawan and today date
+@app.route('/absensi/today/', methods=['GET'])
+def kehadiran_today():
+    pass
+
+# Read absensi based by id_karyawan and monthly
+@app.route('/absensi/monthly', methods=['GET'])
+def kehadiran_monthly():
+    try:
+        conn = connection.connect()
+        query = f"SELECT * FROM kehadiran"
+        result = {
+            'data': connection.query(query, conn),
+            'status_code': '200',
+            'status': 'Query kehadiran success'
+        }
+    except:
+        result = {
+            'status_code': '400',
+            'status': 'Failed to query data kehadiran'
+        }
+
+    return jsonify(result)
+
+# Create check_in
+@app.route('/absensi/checkin', methods=['POST'])
+def check_in():
+    try:
+        request_data = request.get_json(silent=True)
+        id_karyawan = request_data['id_karyawan']
+        clock_in = request_data['clock_in']
+        geolocation = request_data['geolocation']
+        tanggal_masuk = request_data['tgl_masuk']
+    except KeyError:
+        result = {
+            'status_code': '400',
+            'status': "The keys (id_karyawan, clock_in, geolocation, tgl_masuk) are not found in JSON data."
+        }
+        return jsonify(result)
+    except:
+        result = {
+            'status_code': '400',
+            'status': 'JSON data is not found.'
+        }
+        return jsonify(result)
+    
+    conn = connection.connect()
+    query = f"INSERT INTO kehadiran(id_karyawan, clock_in, geolocation_in, tanggal_masuk) VALUES({id_karyawan},'{clock_in}', '{geolocation}', '{tanggal_masuk}')"
+    result = connection.create_update(query, conn, perintah='create')
+    result['status_code'] = '200'
+    result['status'] = 'Check in'
+
+    return jsonify(result)
+
+# Update check_out
+@app.route('/absensi/checkout', methods=['PUT'])
+def checkout():
+    try:
+        request_data = request.get_json(silent=True)
+        id_data = request_data['id_data']
+        clock_out = request_data['clock_out']
+        geolocation = request_data['geolocation']
+    except KeyError:
+        result = {
+            'status_code': '400',
+            'status': "The keys (id_data, clock_out, geolocation) are not found in JSON data."
+        }
+        return jsonify(result)
+    except:
+        result = {
+            'status_code': '400',
+            'status': 'JSON data is not found.'
+        }
+        return jsonify(result)
+
+    conn = connection.connect()
+    query = f"UPDATE kehadiran SET clock_out='{clock_out}', geolocation_out='{geolocation}' WHERE id = {id_data}"
+    result = connection.create_update(query, conn)
+    result['status_code'] = '200'
+    result['status'] = 'Check out success'
+
+    return jsonify(result)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
