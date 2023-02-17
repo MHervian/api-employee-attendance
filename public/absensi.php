@@ -22,10 +22,6 @@ $curl->setHeader('Content-Type', 'application/json');
 // Query API /absensi/login
 $curl->post('http://localhost:5000/absensi/today', $data);
 
-// echo "<pre>";
-// var_dump($curl->response);
-// echo "</pre>";
-
 $result = $curl->response;
 $curl->close();
 
@@ -45,7 +41,7 @@ $curl->close();
     <meta name="author" content="" />
     <title>Absensi - Aplikasi Absensi</title>
     <link href="src/css/styles.css" rel="stylesheet" />
-    <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
+    <script src="src/js/all.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -87,7 +83,7 @@ $curl->close();
                         <div class="card-body">
                             <h4>Check-In Absensi</h4>
                             <?php
-                            if (!empty($result)) {
+                            if ($result->data !== null) {
                                 $geolocation = explode(";", $result->data->geolocation_in);
                             ?>
                                 <p>Pukul: <span style="font-weight: bolder;"><?= $result->data->clock_in ?></span></p>
@@ -141,7 +137,7 @@ $curl->close();
                         </div>
                     </div>
                     <?php
-                    if (!empty($result)) {
+                    if (!empty($result->data)) {
                     ?>
                         <div class="card mb-4">
                             <div class="card-body">
@@ -160,7 +156,7 @@ $curl->close();
                                         <input type="hidden" id="geolocationOut" name="geolocation_out" value="" />
                                         <input type="hidden" name="today" value="<?= $result->data->tanggal_kerja ?>" />
                                         <input type="hidden" name="id_karyawan" value="<?= $_SESSION['id'] ?>" />
-                                        <button class="btn btn-primary">Submit Check-In</button>
+                                        <button class="btn btn-primary">Submit Check-Out</button>
                                     </form>
                                     <script>
                                         var geoInput = document.getElementById('geolocationOut');
@@ -220,7 +216,7 @@ $curl->close();
             </footer>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="src/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="src/js/scripts.js"></script>
 </body>
 
