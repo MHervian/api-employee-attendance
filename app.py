@@ -21,8 +21,14 @@ def employee():
     try: 
         conn = connection.connect()
         query = f"SELECT * FROM karyawan"
+        hasil = connection.query(query, conn)
+
+        # Check if there is no result
+        if hasil == []:
+            hasil = None
+        
         result = {
-            'data': connection.query(query, conn),
+            'data': hasil,
             'status_code': '200',
             'status': 'Query karyawan success'
         }
@@ -88,11 +94,11 @@ def employee_create():
     try:
         request_data = request.get_json(silent=True)
         nama = request_data['nama']
-        password = request_data['password']
+        pass_akun = request_data['pass_akun']
     except KeyError:
         result = {
             'status_code': '400',
-            'status': "The keys (nama, password) are not found in JSON data."
+            'status': "The keys (nama, pass_akun) are not found in JSON data."
         }
         return jsonify(result)
     except:
@@ -102,11 +108,17 @@ def employee_create():
         }
         return jsonify(result)
     
-    conn = connection.connect()
-    query = f"INSERT INTO karyawan(nama, pass_akun) VALUES('{nama}','{password}')"
-    result = connection.create_update(query, conn, perintah='create')
-    result['status_code'] = '200'
-    result['status'] = 'Success created new karyawan'
+    try: 
+        conn = connection.connect()
+        query = f"INSERT INTO karyawan(nama, pass_akun) VALUES('{nama}','{pass_akun}')"
+        result = connection.create_update(query, conn, perintah='create')
+        result['status_code'] = '200'
+        result['status'] = 'Success created new karyawan'
+    except:
+        result = {
+            'status_code': '400',
+            'status': 'Failed to insert absensi hari ini'
+        }
 
     return jsonify(result)
 
@@ -117,11 +129,11 @@ def employee_update():
         request_data = request.get_json(silent=True)
         id_data = request_data['id']
         nama = request_data['nama']
-        password = request_data['password']
+        pass_akun = request_data['pass_akun']
     except KeyError:
         result = {
             'status_code': '400',
-            'status': "The keys (id, nama, password) are not found in JSON data."
+            'status': "The keys (id, nama, pass_akun) are not found in JSON data."
         }
         return jsonify(result)
     except:
@@ -132,7 +144,7 @@ def employee_update():
         return jsonify(result)
 
     conn = connection.connect()
-    query = f"UPDATE karyawan SET nama='{nama}', pass_akun='{password}' WHERE id = {id_data}"
+    query = f"UPDATE karyawan SET nama='{nama}', pass_akun='{pass_akun}' WHERE id = {id_data}"
     result = connection.create_update(query, conn)
     result['status_code'] = '200'
     result['status'] = 'Update karyawan success'
@@ -140,29 +152,44 @@ def employee_update():
     return jsonify(result)
 
 # Delete karyawan
-@app.route('/karyawan', methods=['DELETE'])
-def employee_delete():
+@app.route('/karyawan/<int:id_karyawan>', methods=['DELETE'])
+def employee_delete(id_karyawan):
+    # try:
+    #     request_data = request.get_json(silent=True)
+    #     id_karyawan = request_data['id']
+    # except KeyError:
+    #     result = {
+    #         'status_code': '400',
+    #         'status': "Key 'id' is not found in JSON data."
+    #     }
+    #     return jsonify(result)
+    # except:
+    #     result = {
+    #         'status_code': '400',
+    #         'status': 'JSON data is not found.'
+    #     }
+    #     return jsonify(result)
+
     try:
-        request_data = request.get_json(silent=True)
-        id_data = request_data['id']
-    except KeyError:
-        result = {
-            'status_code': '400',
-            'status': "Key 'id' is not found in JSON data."
-        }
-        return jsonify(result)
+        conn = connection.connect()
+
+        # Delete all absensi by id_karyawan
+        query = f"DELETE FROM kehadiran WHERE id_karyawan = {id_karyawan}"
+        # print(query)
+        result = connection.delete(query, conn)
+
+        # Delete karyawan
+        query = f"DELETE FROM karyawan WHERE id = {id_karyawan}"
+        # print(query)
+        result = connection.delete(query, conn)
+
+        result['status_code'] = '200'
+        result['status'] = 'Delete karyawan success'
     except:
         result = {
             'status_code': '400',
-            'status': 'JSON data is not found.'
+            'status': 'Failed to insert absensi hari ini'
         }
-        return jsonify(result)
-
-    conn = connection.connect()
-    query = f"DELETE FROM karyawan WHERE id = {id_data}"
-    result = connection.delete(query, conn)
-    result['status_code'] = '200'
-    result['status'] = 'Delete karyawan success'
 
     return jsonify(result)
 
@@ -175,8 +202,14 @@ def admin():
     try: 
         conn = connection.connect()
         query = f"SELECT * FROM admin"
+        hasil = connection.query(query, conn)
+
+        # Check if there is no result
+        if hasil == []:
+            hasil = None
+
         result = {
-            'data': connection.query(query, conn),
+            'data': hasil,
             'status_code': '200',
             'status': 'Query admin success'
         }
@@ -421,7 +454,7 @@ def kehadiran_today():
 def kehadiran_monthly(id_karyawan, tanggal):
     try:
         conn = connection.connect()
-        query = f"SELECT * FROM kehadiran WHERE id_karyawan = {id_karyawan} AND tanggal_kerja LIKE '{tanggal}%'"
+        query = f"SELECT * FROM kehadiran WHERE id_karyawan = {id_karyawan} AND tanggal_kerja LIKE '%{tanggal}%'"
         hasil = connection.query(query, conn)
 
         # Check if there are some result
