@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 17, 2023 at 06:41 AM
+-- Generation Time: Feb 14, 2023 at 10:31 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.0.25
 
@@ -33,13 +33,6 @@ CREATE TABLE `admin` (
   `pass_akun` varchar(256) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `admin`
---
-
-INSERT INTO `admin` (`id`, `nama`, `pass_akun`) VALUES
-(1, 'admin', 'admin');
-
 -- --------------------------------------------------------
 
 --
@@ -51,14 +44,6 @@ CREATE TABLE `karyawan` (
   `nama` varchar(256) NOT NULL,
   `pass_akun` varchar(256) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `karyawan`
---
-
-INSERT INTO `karyawan` (`id`, `nama`, `pass_akun`) VALUES
-(1, 'Amin', 'test1'),
-(2, 'lorem', 'ipsum');
 
 -- --------------------------------------------------------
 
@@ -75,13 +60,6 @@ CREATE TABLE `kehadiran` (
   `geolocation_out` text DEFAULT NULL,
   `tanggal_kerja` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `kehadiran`
---
-
-INSERT INTO `kehadiran` (`id`, `id_karyawan`, `clock_in`, `geolocation_in`, `clock_out`, `geolocation_out`, `tanggal_kerja`) VALUES
-(5, 2, '19:06:26', '-6.2423452;106.994906', '19:07:14', '-6.2423452;106.994906', '2023-02-16');
 
 --
 -- Indexes for dumped tables
@@ -114,19 +92,19 @@ ALTER TABLE `kehadiran`
 -- AUTO_INCREMENT for table `admin`
 --
 ALTER TABLE `admin`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `karyawan`
 --
 ALTER TABLE `karyawan`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `kehadiran`
 --
 ALTER TABLE `kehadiran`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables

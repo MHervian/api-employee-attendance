@@ -349,6 +349,25 @@ def kehadiran():
 
     return jsonify(result)
 
+# Read all years of absensi by id_karyawan
+@app.route('/absensi/years/<int:id_karyawan>', methods=["GET"])
+def get_years(id_karyawan):
+    try:
+        conn = connection.connect()
+        query = f"SELECT YEAR(tanggal_kerja) AS tahun FROM kehadiran WHERE id_karyawan = {id_karyawan} GROUP BY YEAR(tanggal_kerja) DESC"
+        result = {
+            'years': connection.query(query, conn),
+            'status_code': '200',
+            'status': 'Query tahun - tahun absensi success'
+        }
+    except:
+        result = {
+            'status_code': '400',
+            'status': 'Failed to query data tahun - tahun absensi'
+        }
+
+    return jsonify(result)
+
 # Read current absensi by karyawan name and today date
 @app.route('/absensi/today', methods=['POST'])
 def kehadiran_today():
@@ -366,12 +385,17 @@ def kehadiran_today():
                     k.tanggal_kerja AS tanggal_kerja
                 FROM kehadiran k INNER JOIN karyawan ka ON ka.id = k.id_karyawan
                     WHERE ka.nama = '{nama}' AND k.tanggal_kerja = '{today}'"""
-
-        hasil = connection.query(query, conn)[0]
-        hasil['clock_in'] = str(hasil['clock_in'])
-        hasil['clock_out'] = str(hasil['clock_out'])
-        hasil['tanggal_kerja'] = str(hasil['tanggal_kerja'])
-        # print(hasil)
+        hasil = connection.query(query, conn)
+        
+        # Check if there is a data kehadiran
+        if hasil != []:
+            # Convert datetime object into string
+            hasil = hasil[0]
+            hasil['clock_in'] = str(hasil['clock_in'])
+            hasil['clock_out'] = str(hasil['clock_out'])
+            hasil['tanggal_kerja'] = str(hasil['tanggal_kerja'])
+        else:
+            hasil = None
 
         result = {
             'data': hasil,
@@ -392,14 +416,28 @@ def kehadiran_today():
 
     return jsonify(result)
 
-# Read absensi based by id_karyawan and monthly
-@app.route('/absensi/monthly', methods=['GET'])
-def kehadiran_monthly():
+# Read absensi based by id_karyawan and tanggal (yyyy-mm)
+@app.route('/absensi/<int:id_karyawan>/<string:tanggal>', methods=['GET'])
+def kehadiran_monthly(id_karyawan, tanggal):
     try:
         conn = connection.connect()
-        query = f"SELECT * FROM kehadiran"
+        query = f"SELECT * FROM kehadiran WHERE id_karyawan = {id_karyawan} AND tanggal_kerja LIKE '{tanggal}%'"
+        hasil = connection.query(query, conn)
+
+        # Check if there are some result
+        if hasil != []:
+            # convert every datetime object into string
+            idx = 0
+            for data in hasil:
+                hasil[idx]['clock_in'] = str(data['clock_in'])
+                hasil[idx]['clock_out'] = str(data['clock_out'])
+                hasil[idx]['tanggal_kerja'] = str(data['tanggal_kerja'])
+                idx += 1
+        else:
+            hasil = None
+
         result = {
-            'data': connection.query(query, conn),
+            'data': hasil,
             'status_code': '200',
             'status': 'Query kehadiran success'
         }
